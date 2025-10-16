@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2 of 5 — Logo Upload</title>
+  <link rel="icon" href="data:,">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #091122;
+      --fg: #eaf2ff;
+      --card: #0f2033;
+      --muted: #9fb0d8;
+      --accent: #2b7de9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', sans-serif;
+      padding-top: 64px;
+      padding-bottom: 64px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 56px;
+      background: var(--card);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      z-index: 9999;
+    }
+    header img {
+      height: 28px;
+      user-select: none;
+      pointer-events: none;
+    }
+    header .logo-text {
+      font-weight: 700;
+      font-size: 1.1rem;
+      user-select: none;
+    }
+    .wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+    .card {
+      background: linear-gradient(180deg, #0c1630, #071123);
+      border-radius: 12px;
+      padding: 24px 20px 28px;
+      border: 1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    h1 {
+      font-size: 1.25rem;
+      margin: 0 0 20px;
+      user-select: none;
+    }
+    .uploader {
+      border: 2px dashed rgba(255,255,255,0.08);
+      padding: 16px;
+      border-radius: 10px;
+      text-align: center;
+      user-select: none;
+    }
+    label[for="logoInput"] {
+      display: block;
+      margin: 8px 0 4px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--accent);
+      user-select: none;
+    }
+    input[type="file"] {
+      display: block;
+      margin: 12px auto;
+      color: var(--fg);
+      cursor: pointer;
+      user-select: none;
+    }
+    .logoPreview {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+      user-select: none;
+    }
+    .logoBox {
+      width: 140px;
+      height: 140px;
+      background: #071423;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 0 8px rgba(43,125,233,0.2);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: center;
+      user-select: none;
+    }
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      transition: background 0.2s ease;
+      user-select: none;
+    }
+    button.ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--fg);
+    }
+    button:hover:not(:disabled) {
+      background: #1d5bb8;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    @media (max-width: 480px) {
+      .logoBox {
+        width: 110px;
+        height: 110px;
+      }
+      h1 {
+        font-size: 1.1rem;
+      }
+      button {
+        width: 100%;
+      }
+      .button-row {
+        flex-direction: column;
+      }
+    }
+    /* Loading overlay */
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10000;
+      pointer-events: none;
+    }
+    #loadingOverlay.active {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: all;
+    }
+    #loadingAnimation {
+      width: 120px;
+      height: 120px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="small-logo.png" alt="Logo" />
+  <div class="logo-text">Buildora.Ai</div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h1>2 of 5 — Logo</h1>
+
+    <div class="uploader" role="region" aria-label="Logo upload section">
+      <div>Upload a custom logo or keep the default one fixed.</div>
+      <label for="logoInput" tabindex="0">Choose a logo file</label>
+      <input type="file" id="logoInput" accept="image/*" aria-describedby="uploadHelp" />
+      <div class="logoPreview" aria-live="polite" aria-atomic="true">
+        <div class="logoBox" aria-label="Logo preview">
+          <canvas id="logoCanvas" width="140" height="140" role="img" aria-hidden="true"></canvas>
+        </div>
+      </div>
+      <div class="small" id="uploadHelp">Tip: Default logo stays fixed until you upload your own.</div>
+    </div>
+
+    <div class="button-row">
+      <button class="ghost" id="back" type="button" aria-label="Go back to step 1">← Back</button>
+      <button id="next" type="button" aria-label="Proceed to step 3">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lottie Loading Overlay -->
+<div id="loadingOverlay">
+  <div id="loadingAnimation"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.1/lottie.min.js"></script>
+<script>
+(function(){
+  const logoInput = document.getElementById('logoInput');
+  const canvas = document.getElementById('logoCanvas');
+  const ctx = canvas.getContext('2d');
+  const backBtn = document.getElementById('back');
+  const nextBtn = document.getElementById('next');
+  const overlay = document.getElementById('loadingOverlay');
+
+  // Lottie loader
+  const anim = lottie.loadAnimation({
+    container: document.getElementById('loadingAnimation'),
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
+    path: 'https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json'
+  });
+
+  function getAll() {
+    let all = {};
+    const rawAll = localStorage.getItem('wizard_all');
+    if (rawAll) {
+      try { all = JSON.parse(rawAll); } catch(e) { all = {}; }
+    }
+    const rawStep1 = localStorage.getItem('wizard_step1');
+    if (rawStep1) {
+      try {
+        const step1 = JSON.parse(rawStep1);
+        if (step1.appName && !all.appName) all.appName = step1.appName;
+      } catch(e){}
+    }
+    return all;
+  }
+
+  function saveToAll(key, data) {
+    const raw = localStorage.getItem('wizard_all');
+    let all = raw ? JSON.parse(raw) : {};
+    all[key] = data;
+    localStorage.setItem('wizard_all', JSON.stringify(all));
+  }
+
+  function prepareCanvas(cssWidth, cssHeight) {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = cssWidth + 'px';
+    canvas.style.height = cssHeight + 'px';
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function drawUploadedImage(img) {
+    const box = canvas.parentElement.getBoundingClientRect();
+    const w = Math.round(box.width);
+    const h = Math.round(box.height);
+    if (w === 0 || h === 0) return;
+    prepareCanvas(w, h);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#071122';
+    ctx.fillRect(0, 0, w, h);
+
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    const srcAspect = iw / ih;
+    const targetAspect = w / h;
+    let sx = 0, sy = 0, sWidth = iw, sHeight = ih;
+    if (Math.abs(srcAspect - targetAspect) > 0.0001) {
+      if (srcAspect > targetAspect) {
+        sWidth = Math.round(ih * targetAspect);
+        sx = Math.round((iw - sWidth) / 2);
+      } else {
+        sHeight = Math.round(iw / targetAspect);
+        sy = Math.round((ih - sHeight) / 2);
+      }
+    }
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, w, h);
+    const dataURL = canvas.toDataURL('image/png');
+    saveToAll('icon', dataURL);
+  }
+
+  function init() {
+    const all = getAll();
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => drawUploadedImage(img);
+    img.onerror = () => {
+      const fallback = new Image();
+      fallback.onload = () => drawUploadedImage(fallback);
+      fallback.src = 'uploading-logo.jpg';
+    };
+    img.src = all.icon || 'uploading-logo.jpg';
+  }
+
+  logoInput.addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image file.');
+      logoInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function() {
+      const img = new Image();
+      img.onload = function() {
+        drawUploadedImage(img);
+      };
+      img.onerror = function() {
+        alert('Failed to load image file. Please try another.');
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  backBtn.addEventListener('click', () => {
+    overlay.classList.add('active');
+    setTimeout(() => {
+      location.href = '1.html';
+    }, 800);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    const all = getAll();
+    if (!all.icon) {
+      const defaultImg = new Image();
+      defaultImg.onload = () => drawUploadedImage(defaultImg);
+      defaultImg.src = 'uploading-logo.jpg';
+    }
+
+    nextBtn.disabled = true;
+    overlay.classList.add('active');
+
+    setTimeout(() => {
+      location.href = '3.html';
+    }, 800);
+  });
+
+  window.addEventListener('resize', () => {
+    const all = getAll();
+    const img = new Image();
+    img.onload = () => drawUploadedImage(img);
+    img.src = all.icon || 'uploading-logo.jpg';
+  });
+
+  init();
+  logoInput.tabIndex = 0;
+  logoInput.focus();
+})();
+</script>
+
+</body>
+</html>

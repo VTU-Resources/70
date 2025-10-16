@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>4 of 5 — App Contact Info</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#081322;
+    --fg:#eaf2ff;
+    --muted:#9fb0d8;
+    --accent:#2b7de9;
+  }
+  body {
+    margin:0;
+    padding:18px;
+    font-family:'Inter',system-ui;
+    background:var(--bg);
+    color:var(--fg);
+    padding-top:64px;
+    padding-bottom:64px;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+  }
+  .wrap {
+    width:100%;
+    max-width:420px;
+  }
+  .card {
+    background:linear-gradient(180deg,#071224,#05101c);
+    padding:20px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.03);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  }
+  h1 {
+    font-size:1.25rem;
+    font-weight:600;
+    margin-top:0;
+    margin-bottom:12px;
+  }
+  label {
+    display:block;
+    margin-top:10px;
+    color:var(--muted);
+    font-size:0.95rem;
+  }
+  input {
+    width:100%;
+    padding:10px;
+    border-radius:9px;
+    border:1px solid rgba(255,255,255,.04);
+    background:transparent;
+    color:var(--fg);
+    font-size:15px;
+    margin-top:6px;
+  }
+  input:focus {
+    border-color:var(--accent);
+    outline:none;
+  }
+  .row {
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+    justify-content:space-between;
+    flex-wrap:wrap;
+  }
+  .btn {
+    padding:12px 20px;
+    font-size:0.9rem;
+    font-weight:600;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    background:var(--accent);
+    color:white;
+    transition:background 0.2s ease;
+  }
+  .ghost {
+    background:transparent;
+    border:1px solid rgba(255,255,255,.06);
+    color:var(--fg);
+  }
+  .btn:hover:not(:disabled) {
+    background:#1d5bb8;
+  }
+  .btn:disabled {
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+
+  /* Loader overlay */
+  #loadingOverlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity 0.3s ease;
+    z-index:10000;
+    pointer-events:none;
+  }
+  #loadingOverlay.active {
+    visibility:visible;
+    opacity:1;
+    pointer-events:all;
+  }
+  #loadingAnimation {
+    width:120px;
+    height:120px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>4 of 5 — App Contact Info</h1>
+
+    <label>Support Email *
+      <input id="supportEmail" type="email" placeholder="support@example.com" required />
+    </label>
+
+    <label>Support Phone *
+      <input id="supportPhone" type="tel" placeholder="Phone number" required />
+    </label>
+
+    <label>Website (if available)
+      <input id="website" type="url" placeholder="https://example.com" />
+    </label>
+
+    <label>Privacy Policy (if available)
+      <input id="privacyPolicy" type="url" placeholder="https://example.com/privacy" />
+    </label>
+
+    <div class="row">
+      <button class="btn ghost" id="back">← Back</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" id="clear">Clear</button>
+        <button class="btn" id="next">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lottie Loader Overlay -->
+<div id="loadingOverlay">
+  <div id="loadingAnimation"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.1/lottie.min.js"></script>
+<script>
+(function(){
+  const email=document.getElementById('supportEmail'),
+        phone=document.getElementById('supportPhone'),
+        website=document.getElementById('website'),
+        privacy=document.getElementById('privacyPolicy'),
+        overlay=document.getElementById('loadingOverlay'),
+        nextBtn=document.getElementById('next'),
+        backBtn=document.getElementById('back'),
+        clearBtn=document.getElementById('clear');
+
+  // Lottie loader
+  const anim=lottie.loadAnimation({
+    container:document.getElementById('loadingAnimation'),
+    renderer:'svg',
+    loop:true,
+    autoplay:true,
+    path:'https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json'
+  });
+
+  const allRaw=localStorage.getItem('wizard_all');
+  let all=allRaw?JSON.parse(allRaw):{};
+  if(all.supportEmail) email.value=all.supportEmail;
+  if(all.supportPhone) phone.value=all.supportPhone;
+  if(all.website) website.value=all.website;
+  if(all.privacyPolicy) privacy.value=all.privacyPolicy;
+
+  nextBtn.addEventListener('click',()=>{
+    if(!email.value.trim() || !phone.value.trim()){
+      alert('Please fill all mandatory fields!');
+      return;
+    }
+    all.supportEmail=email.value;
+    all.supportPhone=phone.value;
+    all.website=website.value;
+    all.privacyPolicy=privacy.value;
+    localStorage.setItem('wizard_all',JSON.stringify(all));
+    localStorage.setItem('wizard_step4',JSON.stringify({
+      supportEmail:email.value,
+      supportPhone:phone.value,
+      website:website.value,
+      privacyPolicy:privacy.value
+    }));
+    nextBtn.disabled=true;
+    overlay.classList.add('active');
+    setTimeout(()=>location.href='5.html',800);
+  });
+
+  backBtn.addEventListener('click',()=>{
+    overlay.classList.add('active');
+    setTimeout(()=>location.href='3.html',800);
+  });
+
+  clearBtn.addEventListener('click',()=>{
+    if(!confirm('Clear all fields?')) return;
+    email.value='';
+    phone.value='';
+    website.value='';
+    privacy.value='';
+  });
+})();
+</script>
+</body>
+</html>

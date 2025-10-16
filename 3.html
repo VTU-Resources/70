@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>3 of 5 — Listing</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#081322;
+    --fg:#eaf2ff;
+    --muted:#9fb0d8;
+    --accent:#2b7de9;
+  }
+  body {
+    margin:0;
+    padding:18px;
+    font-family:'Inter',system-ui;
+    background:var(--bg);
+    color:var(--fg);
+    padding-top:64px;
+    padding-bottom:64px;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+  }
+  .wrap {
+    width:100%;
+    max-width:420px;
+  }
+  .card {
+    background:linear-gradient(180deg,#071224,#05101c);
+    padding:20px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.03);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  }
+  h1 {
+    font-size:1.25rem;
+    font-weight:600;
+    margin-top:0;
+  }
+  label {
+    display:block;
+    margin-top:10px;
+    color:var(--muted);
+  }
+  input,textarea {
+    width:100%;
+    padding:10px;
+    border-radius:9px;
+    border:1px solid rgba(255,255,255,.04);
+    background:transparent;
+    color:var(--fg);
+    font-size:15px;
+  }
+  textarea {
+    min-height:120px;
+  }
+  .chip {
+    display:inline-block;
+    background:rgba(255,255,255,.03);
+    padding:6px 8px;
+    border-radius:999px;
+    margin:6px 6px 0 0;
+    color:var(--muted);
+  }
+  .row {
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+    flex-wrap:wrap;
+    justify-content:space-between;
+  }
+  .btn {
+    padding:12px 20px;
+    font-size:0.9rem;
+    font-weight:600;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    background:var(--accent);
+    color:white;
+    transition:background 0.2s ease;
+  }
+  .ghost {
+    background:transparent;
+    border:1px solid rgba(255,255,255,.06);
+    color:var(--fg);
+  }
+  .btn:hover:not(:disabled) {
+    background:#1d5bb8;
+  }
+  .btn:disabled {
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+
+  /* Loader overlay */
+  #loadingOverlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity 0.3s ease;
+    z-index:10000;
+    pointer-events:none;
+  }
+  #loadingOverlay.active {
+    visibility:visible;
+    opacity:1;
+    pointer-events:all;
+  }
+  #loadingAnimation {
+    width:120px;
+    height:120px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>3 of 5 — Listing content</h1>
+
+    <label>Short Description (one-liner)
+      <input id="shortDesc" maxlength="120" placeholder="One short line that hooks users" />
+    </label>
+
+    <label>Long Description
+      <textarea id="longDesc" placeholder="Write about your app features, privacy, offline use, etc."></textarea>
+      <div style="margin-top:6px;color:var(--muted)">
+        <span id="wordCount">0 words</span>
+      </div>
+    </label>
+
+    <label>Top features
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input id="featureInput" placeholder="Type feature and press Add" />
+        <button class="btn" id="addFeature">Add</button>
+      </div>
+      <div id="featuresArea" style="margin-top:8px"></div>
+    </label>
+
+    <label>Keywords / Tags (comma separated)
+      <input id="keywords" placeholder="notes, vtu, study, pdf" />
+    </label>
+
+    <div class="row">
+      <button class="btn ghost" id="back">← Back</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" id="clear">Clear</button>
+        <button class="btn" id="next">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lottie Loader Overlay -->
+<div id="loadingOverlay">
+  <div id="loadingAnimation"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.1/lottie.min.js"></script>
+<script>
+(function(){
+  const shortDesc=document.getElementById('shortDesc'),
+        longDesc=document.getElementById('longDesc'),
+        featuresArea=document.getElementById('featuresArea'),
+        featureInput=document.getElementById('featureInput'),
+        overlay=document.getElementById('loadingOverlay'),
+        nextBtn=document.getElementById('next'),
+        backBtn=document.getElementById('back'),
+        clearBtn=document.getElementById('clear');
+
+  // Lottie loader setup (same as 2.html)
+  const anim=lottie.loadAnimation({
+    container:document.getElementById('loadingAnimation'),
+    renderer:'svg',
+    loop:true,
+    autoplay:true,
+    path:'https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json'
+  });
+
+  const allRaw=localStorage.getItem('wizard_all');
+  let all=allRaw?JSON.parse(allRaw):{};
+  if(all.shortDesc) shortDesc.value=all.shortDesc;
+  if(all.longDesc) longDesc.value=all.longDesc;
+  let features=Array.isArray(all.features)?all.features.slice():[];
+
+  function renderFeatures(){
+    featuresArea.innerHTML='';
+    features.forEach((f,i)=>{
+      const sp=document.createElement('span');
+      sp.className='chip';
+      sp.textContent=f+'  ✕';
+      sp.style.cursor='pointer';
+      sp.addEventListener('click',()=>{
+        features.splice(i,1);
+        renderFeatures();
+      });
+      featuresArea.appendChild(sp);
+    });
+  }
+  renderFeatures();
+
+  function updateWordCount(){
+    const c=(longDesc.value||'').trim().split(/\s+/).filter(Boolean).length;
+    document.getElementById('wordCount').textContent=`${c} words`;
+  }
+  longDesc.addEventListener('input',updateWordCount);
+  updateWordCount();
+
+  document.getElementById('addFeature').addEventListener('click',()=>{
+    const v=featureInput.value.trim();
+    if(!v) return;
+    features.push(v);
+    featureInput.value='';
+    renderFeatures();
+  });
+
+  nextBtn.addEventListener('click',()=>{
+    all.shortDesc=shortDesc.value;
+    all.longDesc=longDesc.value;
+    all.features=features;
+    all.keywords=document.getElementById('keywords').value;
+    localStorage.setItem('wizard_all',JSON.stringify(all));
+    localStorage.setItem('wizard_step3',JSON.stringify({
+      shortDesc:all.shortDesc,
+      longDesc:all.longDesc,
+      features:all.features,
+      keywords:all.keywords
+    }));
+
+    nextBtn.disabled=true;
+    overlay.classList.add('active');
+
+    setTimeout(()=>{
+      location.href='4.html';
+    },800);
+  });
+
+  backBtn.addEventListener('click',()=>{
+    overlay.classList.add('active');
+    setTimeout(()=>{
+      location.href='2.html';
+    },800);
+  });
+
+  clearBtn.addEventListener('click',()=>{
+    if(!confirm('Clear listing fields?')) return;
+    shortDesc.value='';
+    longDesc.value='';
+    features=[];
+    document.getElementById('keywords').value='';
+    renderFeatures();
+    updateWordCount();
+  });
+})();
+</script>
+</body>
+</html>

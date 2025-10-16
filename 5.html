@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Preview & Generate APK — Step 5</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#061026;--card:#071225;--fg:#eef6ff;--muted:#9fb0d8;--accent:#2b7de9;--glass: rgba(255,255,255,0.03);--radius:12px;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue";background:var(--bg);color:var(--fg);padding:12px}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+h1{font-size:18px}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:12px}
+.panel{background:linear-gradient(180deg,#071225,#061122);padding:12px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,0.4)}
+.previewBox{min-height:420px;border-radius:10px;overflow:auto;border:1px solid var(--glass);padding:12px;background:#071428}
+.thumb{width:100%;height:auto;border-radius:8px}
+.btn{padding:12px 16px;border-radius:10px;border:0;cursor:pointer;background:var(--accent);color:white;font-weight:700;font-size:15px;box-shadow:0 6px 18px rgba(43,125,233,0.12)}
+.ghost{background:transparent;border:1px solid rgba(255,255,255,.06);color:var(--fg)}
+.small{font-size:13px;color:var(--muted)}
+.meta{display:flex;gap:12px;align-items:center}
+.icon{width:84px;height:84px;border-radius:14px;overflow:hidden;flex:0 0 84px;background:linear-gradient(45deg,#0b2747,#061122)}
+.metaTitle{font-size:16px;font-weight:700}
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+ul.features{padding-left:18px;margin:8px 0 0 0}
+.controls{display:flex;flex-direction:column;gap:12px;align-items:stretch;justify-content:center;height:100%}
+.center{display:flex;align-items:center;justify-content:center}
+.hint{text-align:center;font-size:13px;color:var(--muted)}
+.input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--fg)}
+.footerBtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+/* Overlay / generator */
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(0deg, rgba(0,0,0,0.75), rgba(0,0,0,0.7));z-index:9999;padding:18px}
+.cardOverlay{width:100%;max-width:520px;background:#061128;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,0.6);text-align:center}
+.lottieWrap{display:flex;align-items:center;justify-content:center;margin-bottom:12px;position:relative;height:220px}
+/* stacked lottie players */
+lottie-player{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:180px;height:180px;pointer-events:none;transition:opacity .45s ease}
+#bgPlayer{z-index:0;opacity:0.35;filter:contrast(1.05) saturate(1.05)}
+#fgPlayer{z-index:1;opacity:0}
+.progressWrap{height:12px;background:rgba(255,255,255,0.04);border-radius:999px;overflow:hidden;margin:12px 0}
+.progressBar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#4fc3ff);transition:width 0.12s linear}
+.status{font-weight:800;margin-top:6px;font-size:15px}
+.finalScreen{display:none}
+.downloadNote{font-size:13px;color:var(--muted);margin-top:10px}
+@media(max-width:960px){.grid{grid-template-columns:1fr}.cardOverlay{max-width:96%}.previewBox{min-height:320px}.icon{width:68px;height:68px;flex:0 0 68px} lottie-player{width:140px;height:140px} .lottieWrap{height:180px}}
+@media(max-width:480px){lottie-player{width:120px;height:120px}.cardOverlay{padding:14px;border-radius:12px}.btn{padding:10px 12px;font-size:14px;border-radius:8px} .lottieWrap{height:160px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>5 of 5 — Preview & Generate APK</h1><div class="small">Mobile-first preview</div></header>
+<div class="grid">
+<div class="panel">
+<h3>Preview</h3>
+<div class="previewBox" id="previewBox"></div>
+</div>
+<div class="panel">
+<h3>Start Generating your APK</h3>
+<div class="controls">
+<div class="hint">Click the button below to run the professional build animation and download the APK automatically.</div>
+<div class="center" style="margin-top:10px">
+<button id="startGen" class="btn">Start Generating your APK</button>
+</div>
+<div class="hint" style="margin-top:10px">The build sequence will play Lottie animations and then trigger the APK download.</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+<div class="cardOverlay" id="cardOverlay">
+<div id="buildStage">
+<div style="font-size:18px;font-weight:900">Building your app…</div>
+<div class="small" id="buildSub">Preparing assets</div>
+<div class="lottieWrap">
+  <!-- background always-looping slow loader -->
+  <lottie-player id="bgPlayer" background="transparent" speed="0.5" loop autoplay></lottie-player>
+  <!-- foreground sequence player -->
+  <lottie-player id="fgPlayer" background="transparent" loop="false" autoplay="false"></lottie-player>
+</div>
+<div class="progressWrap">
+<div class="progressBar" id="progressBar"></div>
+</div>
+<div class="status" id="statusText">Initializing</div>
+<div class="small downloadNote" id="downloadNote" style="display:none">Your APK will download automatically — if nothing happens, tap the Download button below.</div>
+</div>
+<div class="finalScreen" id="finalScreen">
+<div style="font-size:20px;font-weight:900">Your APK is ready ✅</div>
+<div class="small" id="finalSub">Download should start automatically. If not, use the button below.</div>
+<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+<a id="downloadApk" class="btn" href="#" download>Download APK</a>
+<button id="closeOverlay" class="btn ghost">Close</button>
+</div>
+<div class="downloadNote">Hosted file: Google Drive (direct download)</div>
+</div>
+</div>
+</div>
+
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script>
+(function(){
+  // --- CONFIG: keep 3 animations (removed 2nd & 4th) ---
+  const animations = [
+    "https://assets8.lottiefiles.com/packages/lf20_tno6cg2w.json", // used as slow background + foreground sequence item
+    "https://assets10.lottiefiles.com/packages/lf20_vnikrcia.json",
+    "https://assets2.lottiefiles.com/packages/lf20_3rwasyjy.json"
+  ];
+
+  // Drive link placeholder — replace with your file id (unchanged logic)
+  const DRIVE_FILE_ID='YOUR_DRIVE_FILE_ID';
+  const DIRECT_APK_URL=`https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}`;
+
+  // DOM references
+  const preview = document.getElementById('previewBox');
+  const overlay = document.getElementById('overlay');
+  const bgPlayer = document.getElementById('bgPlayer');
+  const fgPlayer = document.getElementById('fgPlayer');
+  const progressBar = document.getElementById('progressBar');
+  const statusText = document.getElementById('statusText');
+  const buildSub = document.getElementById('buildSub');
+  const startGenBtn = document.getElementById('startGen');
+  const finalScreen = document.getElementById('finalScreen');
+  const buildStage = document.getElementById('buildStage');
+  const downloadApk = document.getElementById('downloadApk');
+  const closeOverlay = document.getElementById('closeOverlay');
+  const downloadNote = document.getElementById('downloadNote');
+
+  // Render preview (unchanged)
+  function getAll(){try{const raw=localStorage.getItem('wizard_all');return raw?JSON.parse(raw):{}}catch(e){return{}}}
+  function renderPreview(){
+    const all=getAll();
+    preview.innerHTML='';
+    const header=document.createElement('div');header.className='meta';
+    const iconWrap=document.createElement('div');iconWrap.className='icon';
+    if(all.icon){const im=document.createElement('img');im.src=all.icon;im.alt='icon';im.style.width='100%';im.style.height='100%';im.style.objectFit='cover';iconWrap.appendChild(im);}else{iconWrap.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted)">ICON</div>'}
+    header.appendChild(iconWrap);
+    const meta=document.createElement('div');
+    const title=document.createElement('div');title.className='metaTitle';title.textContent=all.appName||'My App';
+    const dev=document.createElement('div');dev.className='small';dev.textContent=all.developer||'';
+    const cat=document.createElement('div');cat.className='small';cat.textContent=((all.category||'')+(all.contentRating?' · '+all.contentRating:'')).trim();
+    meta.appendChild(title);meta.appendChild(dev);meta.appendChild(cat);header.appendChild(meta);preview.appendChild(header);
+    if(all.shortDesc){const short=document.createElement('div');short.style.marginTop='12px';short.textContent=all.shortDesc;preview.appendChild(short);}
+    if(all.longDesc){const long=document.createElement('pre');long.style.whiteSpace='pre-wrap';long.style.marginTop='12px';long.textContent=all.longDesc;preview.appendChild(long);}
+    if(Array.isArray(all.screenshots)&&all.screenshots.length){const sgrid=document.createElement('div');sgrid.className='sgrid';all.screenshots.slice(0,4).forEach(src=>{const im=document.createElement('img');im.src=src;im.className='thumb';im.style.height='120px';im.style.objectFit='cover';sgrid.appendChild(im);});preview.appendChild(sgrid);}
+    if(Array.isArray(all.features)&&all.features.length){const f=document.createElement('div');f.style.marginTop='12px';const strong=document.createElement('div');strong.style.fontWeight='700';strong.textContent='Top features';f.appendChild(strong);const ul=document.createElement('ul');ul.className='features';all.features.forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.appendChild(li);});f.appendChild(ul);preview.appendChild(f);}
+  }
+
+  /* -----------------------------
+     Progress manager (smooth, continuous)
+     - starts at 0%
+     - increments smoothly and naturally
+     - never jumps to mid value
+     - when complete() called, animates smoothly to 100%
+     ------------------------------ */
+  const progressManager = (function(){
+    let intervalId = null;
+    let progress = 0;
+
+    function setWidth(p){
+      progress = Math.max(0, Math.min(100, p));
+      progressBar.style.width = progress.toFixed(2) + '%';
+    }
+
+    function start(){
+      // reset
+      clear();
+      progress = 0;
+      setWidth(0);
+      // interval that updates progress in a "realistic" non-linear way
+      intervalId = setInterval(() => {
+        // choose incremental step based on current progress to give realistic behaviour
+        let step = 0.5; // default
+        if (progress < 15) step = 0.3 + Math.random() * 0.6;          // slow start
+        else if (progress < 55) step = 0.8 + Math.random() * 1.2;     // faster middle
+        else if (progress < 85) step = 0.3 + Math.random() * 1.0;     // moderate
+        else step = 0.05 + Math.random() * 0.3;                      // slow near end
+
+        // apply step but cap at 99.5 so finalize handles 100%
+        progress = Math.min(99.5, progress + step);
+        setWidth(progress);
+      }, 140); // update roughly every 140ms (smooth)
+    }
+
+    // smooth animate from current to 100 then call callback
+    function complete(callback){
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+      const startVal = progress;
+      const duration = 700; // ms
+      const startTime = performance.now();
+      function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+      function frame(now){
+        const t = Math.min(1, (now - startTime) / duration);
+        const eased = easeOutCubic(t);
+        const cur = startVal + (100 - startVal) * eased;
+        setWidth(cur);
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          setWidth(100);
+          progress = 100;
+          callback && callback();
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function clear(){
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    }
+
+    function reset(){
+      clear();
+      progress = 0;
+      setWidth(0);
+    }
+
+    return { start, complete, reset, clear };
+  })();
+
+  /* -----------------------------
+     Animation preloading & playback
+     - preload JSONs -> blob URLs (faster switching)
+     - continuous background player runs (first animation slowed)
+     - foreground player plays the 3 animations sequentially with crossfade
+     ------------------------------ */
+
+  async function preloadAnimations(urls){
+    // try fetch each url and create blob urls; fallback to original on failure
+    const results = await Promise.all(urls.map(async (u) => {
+      try {
+        const res = await fetch(u, {cache: 'force-cache'});
+        if (!res.ok) throw new Error('network');
+        const json = await res.json();
+        const blob = new Blob([JSON.stringify(json)], { type: 'application/json' });
+        return URL.createObjectURL(blob);
+      } catch (err) {
+        // fallback
+        console.warn('Preload failed for', u, err);
+        return u;
+      }
+    }));
+    return results;
+  }
+
+  // stage text updater (no longer manipulates progress bar directly)
+  function stageProgress(index,total){
+    const stageNames = [
+      'Preparing assets',
+      'Compiling resources',
+      'Optimizing images',
+      'Bundling code',
+      'Signing package',
+      'Finalizing'
+    ];
+    // map index -> friendly stage
+    statusText.textContent = stageNames[Math.min(index, stageNames.length-1)] || 'Building';
+  }
+
+  async function playForegroundSequence(preloadedUrls, onComplete){
+    const total = preloadedUrls.length;
+    for (let idx = 0; idx < total; idx++){
+      const src = preloadedUrls[idx] || animations[idx];
+      await playOne(src, idx, total);
+    }
+    onComplete && onComplete();
+  }
+
+  function playOne(src, index, total){
+    return new Promise((resolve) => {
+      // show fg player
+      fgPlayer.style.opacity = 1;
+      fgPlayer.setAttribute('loop','false');
+      fgPlayer.setAttribute('autoplay','true');
+
+      // update stage text (does not change progress)
+      stageProgress(index, total);
+
+      // load animation safely
+      try {
+        fgPlayer.load(src);
+      } catch (e) {
+        // fallback: set src attribute
+        try { fgPlayer.setAttribute('src', src); } catch(err) { console.warn('load/src failed', err); }
+      }
+
+      // listen for complete event
+      let done = false;
+      const safetyMs = 6500; // fallback timeout in case 'complete' doesn't fire
+      const onComplete = () => {
+        if (done) return;
+        done = true;
+        fgPlayer.removeEventListener('complete', onComplete);
+        // fade out foreground to reveal continuous background
+        fgPlayer.style.opacity = 0;
+        // small delay for crossfade
+        setTimeout(resolve, 420);
+      };
+
+      fgPlayer.addEventListener('complete', onComplete);
+
+      // safety fallback
+      const fallback = setTimeout(() => {
+        onComplete();
+      }, safetyMs);
+
+      // ensure fallback cleared when resolved
+      const originalResolve = resolve;
+      resolve = function(...args){
+        clearTimeout(fallback);
+        originalResolve(...args);
+      };
+    });
+  }
+
+  /* -----------------------------
+     Orchestrator
+     ------------------------------ */
+
+  let alreadyStarted = false;
+
+  async function startGenerator(){
+    if (alreadyStarted) return;
+    alreadyStarted = true;
+
+    // UI
+    overlay.style.display = 'flex';
+    finalScreen.style.display = 'none';
+    buildStage.style.display = 'block';
+    downloadNote.style.display = 'none';
+    statusText.textContent = 'Initializing';
+    buildSub.textContent = 'Preparing assets';
+
+    // Start the smooth progress early so it begins from 0 -> continuous
+    progressManager.start();
+
+    // Start background loader (slow, continuous)
+    try {
+      bgPlayer.setAttribute('loop','true');
+      bgPlayer.setAttribute('autoplay','true');
+      bgPlayer.setAttribute('speed','0.45'); // slow
+      // attempt to load: (if preloaded, we will replace later)
+      try { bgPlayer.load(animations[0]); } catch(e) { bgPlayer.setAttribute('src', animations[0]); }
+    } catch (e) {
+      console.warn('Background player init failed', e);
+    }
+
+    // Preload animations (this runs in parallel while progress increases)
+    const preloaded = await preloadAnimations(animations);
+
+    // Replace background with preloaded blob url (if available)
+    if (preloaded && preloaded[0]) {
+      try { bgPlayer.load(preloaded[0]); } catch(e) { bgPlayer.setAttribute('src', preloaded[0]); }
+    }
+
+    // Play foreground sequence (sequential), when done -> finalizeAndDownload
+    playForegroundSequence(preloaded, finalizeAndDownload).catch(err => {
+      console.warn('Foreground sequence failed', err);
+      // still finalize to avoid stuck state
+      finalizeAndDownload();
+    });
+  }
+
+  function finalizeAndDownload(){
+    // When sequence complete, smoothly finish progress to 100%
+    progressManager.complete(() => {
+      // now show final UI and trigger download
+      statusText.textContent = 'Completed';
+      buildSub.textContent = 'APK ready';
+      downloadNote.style.display = 'block';
+      buildStage.style.display = 'none';
+      finalScreen.style.display = 'block';
+
+      // prepare download anchor and trigger
+      downloadApk.href = DIRECT_APK_URL;
+      const suggestedName = (getAll().appName||'app').replace(/\s+/g,'-').toLowerCase()+'.apk';
+      downloadApk.setAttribute('download', suggestedName);
+
+      // try auto-download
+      try {
+        downloadApk.dispatchEvent(new MouseEvent('click'));
+      } catch (e) {
+        console.warn('Auto-download failed:', e);
+      }
+
+      // reset after short delay so user can re-run if desired
+      setTimeout(() => { alreadyStarted = false; }, 1500);
+    });
+  }
+
+  // Close overlay - also reset progress & players
+  closeOverlay.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    // try to pause players (if methods exist)
+    try { bgPlayer.pause && bgPlayer.pause(); } catch(e){}
+    try { fgPlayer.pause && fgPlayer.pause(); } catch(e){}
+    // reset progress visually
+    progressManager.reset();
+    alreadyStarted = false;
+  });
+
+  // Bind start button
+  startGenBtn.addEventListener('click', startGenerator);
+
+  // Keydown escape close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.style.display === 'flex') {
+      overlay.style.display = 'none';
+      progressManager.reset();
+      alreadyStarted = false;
+    }
+  });
+
+  // boot preview
+  renderPreview();
+
+})();
+</script>
+</body>
+</html>

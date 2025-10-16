@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>1 of 5 — App Basics</title>
+  <link rel="icon" href="data:,">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card-bg: #0e1628;
+      --text-primary: #e8eefc;
+      --text-muted: #9fb0d8;
+      --accent: #2b7de9;
+      --input-bg: #071122;
+      --input-border: rgba(255,255,255,0.06);
+      --input-focus-shadow: 0 0 8px 2px rgba(43,125,233,0.5);
+      --btn-bg: #2b7de9;
+      --btn-hover: #1d5bb8;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      padding-top: 64px; /* space for fixed header */
+      padding-bottom: 64px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    header {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 56px;
+      background: var(--card-bg);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      z-index: 9999;
+    }
+    header img { height: 28px; user-select: none; }
+    header .logo-text {
+      font-weight: 700;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+    .container {
+      width: 100%; max-width: 420px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px 28px 32px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.015em;
+    }
+    label {
+      display: block;
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 10px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: var(--input-focus-shadow);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+      gap: 16px 20px;
+      margin-top: 16px;
+    }
+    .button-group {
+      margin-top: 28px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    button {
+      padding: 12px 22px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: var(--btn-bg);
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover:not(:disabled) {
+      background: var(--btn-hover);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    @media (max-width: 380px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      h1 { font-size: 1.15rem; }
+      button { width: 100%; }
+    }
+    /* Loading overlay */
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10000;
+      pointer-events: none;
+    }
+    #loadingOverlay.active {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: all;
+    }
+    #loadingAnimation {
+      width: 120px;
+      height: 120px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="small-logo.png" alt="Logo" />
+    <div class="logo-text">Buildora.Ai</div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h1>1 of 5 — App basics</h1>
+      <form id="appBasicsForm" autocomplete="off" novalidate>
+        <label for="appName">App Name</label>
+        <input id="appName" name="appName" type="text" placeholder="Enter App Name (e.g. SmartNotes)" required />
+
+        <div class="grid">
+          <div>
+            <label for="developer">Developer / Publisher</label>
+            <input id="developer" name="developer" type="text" placeholder="Your Company Name" required />
+          </div>
+          <div>
+            <label for="packageId">Package ID</label>
+            <input id="packageId" name="packageId" type="text" placeholder="com.example.app" required />
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+              <option value="" disabled selected>Select category</option>
+              <option>Productivity</option><option>Education</option><option>Business</option><option>Tools</option><option>Entertainment</option><option>Finance</option>
+            </select>
+          </div>
+          <div>
+            <label for="contentRating">Content Rating</label>
+            <select id="contentRating" name="contentRating" required>
+              <option value="" disabled selected>Select rating</option>
+              <option>Rated for 3+</option><option>Rated for 7+</option><option>Rated for 12+</option><option>Rated for 16+</option><option>Rated for 18+</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="pricing">Pricing</label>
+            <select id="pricing" name="pricing" required>
+              <option value="" disabled selected>Select pricing</option>
+              <option value="free">Free</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div>
+            <label for="price">Price (₹)</label>
+            <input id="price" name="price" type="number" min="0" step="1" value="0" />
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" id="next">Next →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="loadingOverlay">
+    <div id="loadingAnimation"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.1/lottie.min.js"></script>
+  <script>
+    (function(){
+      const keys = ['appName','developer','packageId','category','contentRating','pricing','price'];
+      const form = document.getElementById('appBasicsForm');
+      const overlay = document.getElementById('loadingOverlay');
+      const nextBtn = document.getElementById('next');
+      const pricingEl = document.getElementById('pricing');
+      const priceEl = document.getElementById('price');
+
+      // initialize loading animation (optional)
+      const anim = lottie.loadAnimation({
+        container: document.getElementById('loadingAnimation'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json'
+      });
+
+      function saveStep1() {
+        const obj = {};
+        keys.forEach(k => {
+          const el = document.getElementById(k);
+          if (el) obj[k] = (el.value || '').toString().trim();
+        });
+        localStorage.setItem('wizard_step1', JSON.stringify(obj));
+      }
+
+      function loadStep1() {
+        const raw = localStorage.getItem('wizard_step1');
+        if (!raw) return;
+        try {
+          const obj = JSON.parse(raw);
+          keys.forEach(k => {
+            const el = document.getElementById(k);
+            if (el && obj[k] !== undefined) el.value = obj[k];
+          });
+        } catch(e) {}
+      }
+
+      // hydrate from wizard_all if present
+      function hydrateFromAll() {
+        const raw = localStorage.getItem('wizard_all');
+        if (!raw) return;
+        try {
+          const all = JSON.parse(raw);
+          keys.forEach(k => {
+            const el = document.getElementById(k);
+            if (el && all[k] && !el.value) el.value = all[k];
+          });
+        } catch(e) {}
+      }
+
+      function ensurePriceToggle() {
+        // if pricing is 'paid' enable price, else disable and set to 0
+        if (pricingEl.value === 'paid') {
+          priceEl.disabled = false;
+          if (!priceEl.value) priceEl.value = '0';
+        } else {
+          priceEl.disabled = true;
+          priceEl.value = '0';
+        }
+      }
+
+      // on load populate fields
+      hydrateFromAll();
+      loadStep1();
+      ensurePriceToggle();
+
+      // Save whenever inputs/selects change
+      form.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', saveStep1);
+        el.addEventListener('change', saveStep1);
+      });
+
+      // specific pricing change
+      pricingEl.addEventListener('change', () => {
+        ensurePriceToggle();
+        saveStep1();
+      });
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // validation
+        for (let k of keys) {
+          const el = document.getElementById(k);
+          if (el && el.hasAttribute('required') && !el.value.toString().trim()) {
+            el.focus();
+            return;
+          }
+        }
+
+        saveStep1();
+
+        // update wizard_all
+        const allRaw = localStorage.getItem('wizard_all');
+        let all = allRaw ? JSON.parse(allRaw) : {};
+        keys.forEach(k => {
+          const el = document.getElementById(k);
+          if (el) all[k] = (el.value || '').toString().trim();
+        });
+        localStorage.setItem('wizard_all', JSON.stringify(all));
+
+        // disable button and show overlay
+        nextBtn.disabled = true;
+        overlay.classList.add('active');
+
+        // after delay, redirect
+        setTimeout(() => {
+          window.location.href = '2.html';
+        }, 800);
+      });
+    })();
+  </script>
+</body>
+</html>
